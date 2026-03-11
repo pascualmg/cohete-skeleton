@@ -26,9 +26,13 @@ class CreateTodoController implements HttpRequestHandler
         ?array $routeParams
     ): ResponseInterface|PromiseInterface {
         $body = json_decode($request->getBody()->getContents(), true);
+        if (is_null($body)) {
+            return JsonResponse::create(400, ['error' => 'invalid json']);
+        }
+
         $title = $body['title'] ?? '';
 
-        if (empty($title)) {
+        if ($title === '') {
             return JsonResponse::create(400, ['error' => 'title is required']);
         }
 
