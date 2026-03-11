@@ -1,0 +1,40 @@
+{
+    "name": "cohete/skeleton",
+    "description": "Skeleton project for Cohete async PHP framework",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2",
+        "cohete/framework": "dev-main",
+        "cohete/ddd": "dev-main",
+        "reactivex/rxphp": "^2.0"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/pascualmg/cohete-framework.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/pascualmg/cohete-ddd.git"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Pascual Munoz",
+            "homepage": "https://pascualmg.dev"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "method": "GET",
+    "path": "/health",
+    "handler": "App\\Controller\\HealthController"
+  },
+  {
+    "method": "GET",
+    "path": "/todos",
+    "handler": "App\\Controller\\ListTodosController"
+  },
+  {
+    "method": "POST",
+    "path": "/todos",
+    "handler": "App\\Controller\\CreateTodoController"
+  }
+]
