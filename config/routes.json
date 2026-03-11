@@ -13,5 +13,20 @@
     "method": "POST",
     "path": "/todos",
     "handler": "App\\Controller\\CreateTodoController"
+  },
+  {
+    "method": "GET",
+    "path": "/todos/{id}",
+    "handler": "App\\Controller\\GetTodoController"
+  },
+  {
+    "method": "PUT",
+    "path": "/todos/{id}",
+    "handler": "App\\Controller\\UpdateTodoController"
+  },
+  {
+    "method": "DELETE",
+    "path": "/todos/{id}",
+    "handler": "App\\Controller\\DeleteTodoController"
   }
 ]
