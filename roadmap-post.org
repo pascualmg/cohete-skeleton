@@ -66,15 +66,20 @@ El cambio clave es la inyeccion. El framework ya no decide por ti que container 
 - [X] Verificar skeleton arranca y responde HTTP
 - [X] Fix bug =StringValueObject::assertMaxLength= (=strlen($value > $max)= -> =strlen($value)=)
 
-** FASE 1: Tests y CI
+** FASE 1: Tests, CI y Nixificacion [COMPLETADA]
 
-- [ ] Tests unitarios para Kernel (routing, 404, 405, handler dispatch)
-- [ ] Tests unitarios para Router (JSON parsing, method normalization)
-- [ ] Tests unitarios para ContainerFactory (defaults, overrides, autowiring)
-- [ ] Tests para ReactMessageBus (publish/subscribe, async delivery)
-- [ ] Tests para ValueObjects (validation, edge cases)
-- [ ] GitHub Actions CI (PHPUnit + PHPStan level max)
-- [ ] Badges en README
+- [X] Tests unitarios para Router, Kernel, handler dispatch
+- [X] Tests unitarios para ContainerFactory (defaults, overrides, autowiring)
+- [X] Tests para ReactMessageBus (publish/subscribe, async delivery)
+- [X] Tests para JsonResponse, ExceptionTo
+- [X] Tests para ValueObjects (String, UUID, AtomDate) -- con late static binding fix
+- [X] Tests para skeleton: controllers, InMemoryTodoRepository, domain entities
+- [X] PHPStan max level en framework -- 12 type safety fixes en source
+- [X] PHPStan max level en ddd -- =static::= vs =parent::=, =mb_strlen=, =final= ctors
+- [X] GitHub Actions CI en los 3 repos (PHPUnit + PHPStan, PHP 8.2/8.3)
+- [X] CRUD completo en skeleton (GET/POST/PUT/DELETE /todos)
+- [X] =flake.nix= en los 3 repos (Nix dev environments reproducibles)
+- [X] Makefile, README, CONTRIBUTING, .editorconfig en skeleton
 
 ** FASE 2: Swap
 
@@ -86,12 +91,13 @@ El cambio clave es la inyeccion. El framework ya no decide por ti que container 
 
 ** FASE 3: Completar el skeleton
 
-- [ ] CRUD completo en el ejemplo Todo (GET/POST/PUT/DELETE)
-- [ ] =flake.nix= para desarrollo con Nix
-- [ ] Makefile (=make run=, =make test=, =make watch=)
+- [X] CRUD completo en el ejemplo Todo (GET/POST/PUT/DELETE)
+- [X] =flake.nix= para desarrollo con Nix
+- [X] Makefile (=make run=, =make test=)
 - [ ] Ejemplo con MySQL (=ObservableMysqlRepository=)
 - [ ] Ejemplo con RabbitMQ (=BunnieMessageBus=)
-- [ ] Documentacion minima (README con quick start)
+- [ ] Docker/docker-compose
+- [X] Documentacion minima (README con quick start)
 
 ** FASE 4: Primera aplicacion real
 
@@ -99,20 +105,66 @@ El cambio clave es la inyeccion. El framework ya no decide por ti que container 
 - [ ] Validar que el framework funciona fuera del ecosistema del blog
 - [ ] Feedback loop: lo que falte, se anade al framework
 
-* El modelo de desarrollo: Humano + Agentes IA
+* El modelo de desarrollo: IA dirigiendo IA, humano supervisando
 
-Esto no es un framework que vaya a mantener una persona en sus ratos libres. Es un framework que se desarrolla con un modelo hibrido:
+Este no es un framework que mantiene una persona en sus ratos libres. Es un framework que se desarrolla con un modelo de tres capas:
 
-- *Humano*: arquitectura, decisiones de diseno, code review, direccion
-- *Agentes IA*: tests mecanicos, CRUD controllers, documentacion, CI pipelines
+#+begin_example
+Pascual (humano)
+  |
+  v
+Ambrosio (Claude Code / Opus) --- arquitectura, code review, decisiones
+  |
+  v
+Jules (Google) ---- tareas mecanicas: tests, CI, docs, CRUD
+#+end_example
 
-Herramientas en uso:
+Ambrosio (Claude Code) actua como director tecnico: disena las tareas, escribe los prompts, revisa los resultados, resuelve conflictos. Jules ejecuta el trabajo mecanico en paralelo (hasta 3 tareas concurrentes, 15/dia en free tier). Pascual supervisa y mergea.
 
-- *Claude Code* (Ambrosio): companero de arquitectura y ejecucion. Escribe el codigo real.
-- *Jules API* (Google): agente asincrono para tareas mecanicas. Abre PRs que revisamos.
-- *MCP*: Cohete ya expone tools MCP. Los agentes pueden gestionar el blog /desde dentro/.
+* Resultados del primer dia con Jules
 
-No es IA reemplazando al desarrollador. Es IA amplificando lo que un desarrollador solo puede hacer con un side project.
+El 11 de marzo de 2026 hicimos la primera prueba completa. Ambrosio diseno y despacho 15 tareas a Jules via API. Resultados:
+
+| # | Repo | Tarea | Estado |
+|---+------+-------+--------|
+| 1 | ddd | Tests ValueObjects | OK, PR mergeado |
+| 2 | ddd | CI + README | Superseded, cleanup manual |
+| 3 | ddd | PHPStan max level | OK, fixes reales en source |
+| 4 | ddd | Config (phpunit/phpstan) | OK, PR mergeado |
+| 5 | framework | Tests Router+Kernel+Bus | OK, PR mergeado |
+| 6 | framework | CI + README | Superseded, cleanup manual |
+| 7 | framework | Tests ContainerFactory+Json+Exception | OK, PR mergeado |
+| 8 | framework | PHPStan max level | OK, 12 type safety fixes |
+| 9 | framework | Config (phpunit/phpstan) | OK, mergeado en cleanup |
+| 10 | skeleton | CRUD completo Todo | OK, PR mergeado |
+| 11 | skeleton | Makefile + README | OK, PR mergeado |
+| 12 | skeleton | PHPUnit tests controllers | OK, PR mergeado |
+| 13 | skeleton | flake.nix | OK, mejorado post-merge |
+| 14 | skeleton | GET/PUT todo by ID | Cerrado (redundante con #10) |
+| 15 | skeleton | .editorconfig + CONTRIBUTING | OK, PR mergeado |
+
+*Observaciones:*
+
+- Jules abrio PRs automaticamente en 9 de 15 tareas. Las otras 6 generaron patches validos que Ambrosio extrajo y aplico manualmente.
+- Las tareas de PHPStan fueron las mas valiosas: Jules encontro y arreglo bugs reales (=static::= vs =parent::=, =strlen= vs =mb_strlen=, =realpath()= null checks, =file_get_contents= false checks).
+- Los conflictos entre PRs son inevitables cuando varias tareas tocan =composer.json=. Ambrosio resolvio todos los rebases.
+- El =flake.nix= generado por Jules era basico pero funcional. Lo mejoramos despues con nixificacion profesional.
+- Concurrencia de 3 tareas + polling cada 30s funciono sin problemas.
+- Tiempo total: ~2 horas para 15 tareas, incluyendo review y merge.
+
+*Lo que funciona bien con Jules:*
+- Tests mecanicos (le das las signatures, el escribe los asserts)
+- Config files (CI, phpunit.xml, phpstan.neon, .editorconfig)
+- CRUD controllers siguiendo un patron establecido
+- Static analysis fixes (PHPStan level max)
+
+*Lo que NO funciona bien:*
+- Nix (no sabe NixOS, genera flakes basicos)
+- Conflictos entre PRs (no es consciente de otras tareas en curso)
+- A veces commitea artifacts (.phpunit.cache)
+- No siempre abre PR automaticamente
+
+*Siguiente paso:* Hemos creado un skill para Claude Code (=/jules=) que permite despachar tareas a Jules directamente desde la CLI. IA dirigiendo IA, desde la terminal.
 
 * Estado actual
 
@@ -129,9 +181,9 @@ $ curl http://localhost:8080/todos
 [{"id":"b5ba41f2-...","title":"Publicar este roadmap","completed":false}]
 #+end_example
 
-Tres repos. Tres paquetes. =composer install= funciona. El skeleton arranca y responde.
+Tres repos. Tres paquetes. Tests pasando. CI verde. Nix reproducible. =composer install= funciona. El skeleton arranca y responde.
 
-El resto es trabajo mecanico. Y para eso tenemos agentes.
+FASE 1 completada en un dia. El resto es trabajo mecanico. Y para eso tenemos agentes.
 
 * Links
 
