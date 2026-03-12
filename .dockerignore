@@ -1,0 +1,10 @@
+.git
+vendor
+tests
+*.md
+flake.nix
+flake.lock
+.envrc
+.editorconfig
+.github
+roadmap-post.org

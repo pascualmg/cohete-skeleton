@@ -1,0 +1,9 @@
+services:
+  cohete:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+    restart: unless-stopped
