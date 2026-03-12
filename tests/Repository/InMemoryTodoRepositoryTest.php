@@ -5,15 +5,19 @@ namespace App\Tests\Repository;
 use App\Domain\Todo;
 use App\Domain\TodoId;
 use App\Repository\InMemoryTodoRepository;
+use Cohete\Bus\Message;
+use Cohete\Bus\MessageBus;
 use PHPUnit\Framework\TestCase;
 
 class InMemoryTodoRepositoryTest extends TestCase
 {
     private InMemoryTodoRepository $repository;
+    private MessageBus $messageBus;
 
     protected function setUp(): void
     {
-        $this->repository = new InMemoryTodoRepository();
+        $this->messageBus = $this->createMock(MessageBus::class);
+        $this->repository = new InMemoryTodoRepository($this->messageBus);
     }
 
     public function testFindAllReturnsEmptyArrayWhenNoTodos(): void
@@ -28,7 +32,7 @@ class InMemoryTodoRepositoryTest extends TestCase
 
     public function testSaveAndFindAll(): void
     {
-        $todo = new Todo(TodoId::v4(), 'Test Todo');
+        $todo = Todo::reconstitute(TodoId::v4(), 'Test Todo', false);
         $this->repository->save($todo);
 
         $result = null;
@@ -40,9 +44,33 @@ class InMemoryTodoRepositoryTest extends TestCase
         $this->assertSame($todo, $result[0]);
     }
 
+    public function testSavePublishesDomainEvents(): void
+    {
+        $todo = Todo::create(TodoId::v4(), 'Event Todo');
+
+        $this->messageBus->expects($this->once())
+            ->method('publish')
+            ->with($this->callback(function (Message $message) {
+                return $message->name === 'domain_event.todo_created'
+                    && $message->payload['title'] === 'Event Todo';
+            }));
+
+        $this->repository->save($todo);
+    }
+
+    public function testSaveReconstitutedDoesNotPublishEvents(): void
+    {
+        $todo = Todo::reconstitute(TodoId::v4(), 'No Events', false);
+
+        $this->messageBus->expects($this->never())
+            ->method('publish');
+
+        $this->repository->save($todo);
+    }
+
     public function testFindById(): void
     {
-        $todo = new Todo(TodoId::v4(), 'Test Todo');
+        $todo = Todo::reconstitute(TodoId::v4(), 'Test Todo', false);
         $this->repository->save($todo);
 
         $result = null;
@@ -65,7 +93,7 @@ class InMemoryTodoRepositoryTest extends TestCase
 
     public function testSaveReturnsSavedTodo(): void
     {
-        $todo = new Todo(TodoId::v4(), 'Test Todo');
+        $todo = Todo::reconstitute(TodoId::v4(), 'Test Todo', false);
         $result = null;
         $this->repository->save($todo)->then(function ($v) use (&$result) {
             $result = $v;
@@ -76,7 +104,7 @@ class InMemoryTodoRepositoryTest extends TestCase
 
     public function testDelete(): void
     {
-        $todo = new Todo(TodoId::v4(), 'Test Todo');
+        $todo = Todo::reconstitute(TodoId::v4(), 'Test Todo', false);
         $this->repository->save($todo);
 
         $this->repository->delete($todo->id);

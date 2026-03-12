@@ -5,6 +5,8 @@ namespace App\Repository;
 use App\Domain\Todo;
 use App\Domain\TodoId;
 use App\Domain\TodoRepository;
+use Cohete\Bus\Message;
+use Cohete\Bus\MessageBus;
 use React\Promise\PromiseInterface;
 use Rx\Observable;
 
@@ -14,6 +16,11 @@ class InMemoryTodoRepository implements TodoRepository
 {
     /** @var array<string, Todo> */
     private array $todos = [];
+
+    public function __construct(
+        private readonly MessageBus $messageBus,
+    ) {
+    }
 
     public function findAll(): PromiseInterface
     {
@@ -30,6 +37,13 @@ class InMemoryTodoRepository implements TodoRepository
     public function save(Todo $todo): PromiseInterface
     {
         $this->todos[$todo->id->value] = $todo;
+
+        foreach ($todo->pullDomainEvents() as $event) {
+            $this->messageBus->publish(
+                new Message($event->eventName(), $event->payload())
+            );
+        }
+
         return resolve($todo);
     }
 

@@ -5,8 +5,6 @@ namespace App\Controller;
 use App\Domain\Todo;
 use App\Domain\TodoId;
 use App\Domain\TodoRepository;
-use Cohete\Bus\Message;
-use Cohete\Bus\MessageBus;
 use Cohete\HttpServer\HttpRequestHandler;
 use Cohete\HttpServer\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
@@ -17,7 +15,6 @@ class CreateTodoController implements HttpRequestHandler
 {
     public function __construct(
         private readonly TodoRepository $todoRepository,
-        private readonly MessageBus $messageBus,
     ) {
     }
 
@@ -32,16 +29,13 @@ class CreateTodoController implements HttpRequestHandler
             return JsonResponse::create(400, ['error' => 'title is required']);
         }
 
-        $todo = new Todo(
+        $todo = Todo::create(
             id: TodoId::v4(),
             title: $title,
         );
 
         return $this->todoRepository->save($todo)
             ->then(function (Todo $todo) {
-                $this->messageBus->publish(
-                    new Message('domain_event.todo_created', $todo->toArray())
-                );
                 return JsonResponse::create(201, $todo->toArray());
             });
     }

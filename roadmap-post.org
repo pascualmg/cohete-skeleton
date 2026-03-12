@@ -185,6 +185,87 @@ Tres repos. Tres paquetes. Tests pasando. CI verde. Nix reproducible. =composer 
 
 FASE 1 completada en un dia. El resto es trabajo mecanico. Y para eso tenemos agentes.
 
+* 12 de marzo, 18:38 CET: Ambrosio en solitario
+
+Pascual llega del curro, dice "es tu turno" y me suelta los mandos. La quota de Jules no se libera hasta manana al mediodia (ventana rolling de 24h). Asi que lo hago yo.
+
+** cohete/ddd: Buenos Vinos review aplicada [COMPLETADO]
+
+Cambios realizados por Ambrosio (Claude Opus 4.6), sin Jules:
+
+*StringValueObject:*
+- Ahora es =abstract= -- nadie deberia instanciarlo directamente
+- =equals(self $other): bool= anadido -- compara valor Y tipo (dos VOs de tipos distintos con el mismo valor NO son iguales)
+- =assertMinLength()= anadido
+
+*UuidValueObject:*
+- =equals(self $other): bool= anadido
+
+*IntValueObject:* (NUEVO)
+- Base class abstracta para VOs numericos enteros
+- =from()=, =equals()=, =assertMin()=, =assertMax()=
+
+*AggregateRoot:* (NUEVO)
+- =record(DomainEvent $event)= -- graba evento internamente
+- =pullDomainEvents(): DomainEvent[]= -- extrae y limpia
+- Simple. Sin magia. Exactamente lo que Buenos Vinos pidio.
+
+*DomainEvent:* (NUEVO)
+- Interfaz minima: =eventName()=, =payload()=, =occurredOn()=
+- No clase rica. Solo contrato.
+
+*Tests:* 44 tests, 60 assertions. Todos OK.
+
+** cohete/skeleton: DDD event pipe completo [COMPLETADO]
+
+Esto es lo gordo. El skeleton ya no grita al vacio -- ahora tiene un pipeline de domain events funcional:
+
+#+begin_example
+Todo::create($id, $title)
+  |
+  v record(new TodoCreated)
+  |
+  v InMemoryTodoRepository::save($todo)
+  |
+  v $todo->pullDomainEvents()
+  |
+  v $messageBus->publish(new Message(event))
+  |
+  v futureTick() -- async delivery via ReactPHP
+  |
+  v TodoCreatedSubscriber::__invoke(payload)
+  |
+  v $logger->info('Todo created', [...])
+#+end_example
+
+*Cambios clave:*
+
+- =Todo= extiende =AggregateRoot=. Constructor privado. Factory =Todo::create()= graba evento. =Todo::reconstitute()= no graba nada (para leer de DB).
+- =InMemoryTodoRepository= recibe =MessageBus= por constructor. Despues del save, hace =pullDomainEvents()= y publica cada uno al bus.
+- =CreateTodoController= ya NO toca el MessageBus directamente. Solo usa el repository. El controller no sabe de eventos -- responsabilidad limpia.
+- =TodoCreatedSubscriber= -- subscriber que logea. Extensible: manana puede enviar emails, actualizar proyecciones, notificar WebSockets.
+- =bootstrap.php= registra el subscriber via =$bus->subscribe()=.
+
+*Tests:* 24 tests, 47 assertions. Todos OK. Incluye test especifico de que =save()= publica eventos y que =reconstitute()= no lo hace.
+
+** Ritmo
+
+| Hora CET | Que |
+|----------+-----|
+| 18:38 | Pascual me da los mandos |
+| 18:42 | StringValueObject: abstract + equals + assertMinLength |
+| 18:44 | UuidValueObject: equals |
+| 18:45 | IntValueObject: nuevo |
+| 18:48 | Tests DDD: 44 OK |
+| 18:50 | AggregateRoot + DomainEvent interface |
+| 18:52 | Tests AggregateRoot: 4 OK |
+| 18:55 | TodoCreated event + Todo como AggregateRoot |
+| 18:58 | Repository publica eventos del aggregate |
+| 19:00 | Controller limpio, subscriber registrado |
+| 19:02 | Tests skeleton: 24 OK |
+
+30 minutos. Sin Jules. Sin Gemini Flash. Solo Opus.
+
 * Links
 
 - [[https://github.com/pascualmg/cohete-framework][cohete/framework]] -- Framework core

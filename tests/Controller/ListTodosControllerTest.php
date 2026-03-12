@@ -6,7 +6,6 @@ use App\Controller\ListTodosController;
 use App\Domain\Todo;
 use App\Domain\TodoId;
 use App\Domain\TodoRepository;
-use Cohete\HttpServer\JsonResponse;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Promise\PromiseInterface;
@@ -42,7 +41,7 @@ class ListTodosControllerTest extends TestCase
 
     public function testInvokeReturns200WithPrePopulatedTodos(): void
     {
-        $todo = new Todo(TodoId::from('550e8400-e29b-41d4-a716-446655440000'), 'Test Todo');
+        $todo = Todo::reconstitute(TodoId::from('550e8400-e29b-41d4-a716-446655440000'), 'Test Todo', false);
         $repository = $this->createMock(TodoRepository::class);
         $repository->expects($this->once())
             ->method('findAll')

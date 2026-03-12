@@ -5,9 +5,6 @@ namespace App\Tests\Controller;
 use App\Controller\CreateTodoController;
 use App\Domain\Todo;
 use App\Domain\TodoRepository;
-use Cohete\Bus\Message;
-use Cohete\Bus\MessageBus;
-use Cohete\HttpServer\JsonResponse;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
@@ -18,14 +15,12 @@ use function React\Promise\resolve;
 class CreateTodoControllerTest extends TestCase
 {
     private $repository;
-    private $messageBus;
     private $controller;
 
     protected function setUp(): void
     {
         $this->repository = $this->createMock(TodoRepository::class);
-        $this->messageBus = $this->createMock(MessageBus::class);
-        $this->controller = new CreateTodoController($this->repository, $this->messageBus);
+        $this->controller = new CreateTodoController($this->repository);
     }
 
     public function testEmptyTitleReturns400(): void
@@ -54,13 +49,6 @@ class CreateTodoControllerTest extends TestCase
             ->method('save')
             ->with($this->callback(fn(Todo $todo) => $todo->title === $title))
             ->willReturnCallback(fn(Todo $todo) => resolve($todo));
-
-        $this->messageBus->expects($this->once())
-            ->method('publish')
-            ->with($this->callback(function (Message $message) use ($title) {
-                return $message->name === 'domain_event.todo_created' &&
-                       $message->payload['title'] === $title;
-            }));
 
         $response = $this->controller->__invoke($request, null);
 

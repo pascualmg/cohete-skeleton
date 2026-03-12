@@ -31,11 +31,13 @@ class UpdateTodoController implements HttpRequestHandler
                     return JsonResponse::create(404, ['error' => 'Todo not found']);
                 }
 
-                $updatedTodo = new Todo(
-                    id: $todo->id,
-                    title: $body['title'] ?? $todo->title,
-                    completed: $body['completed'] ?? $todo->completed,
-                );
+                $updatedTodo = $todo;
+                if (isset($body['title'])) {
+                    $updatedTodo = $updatedTodo->withTitle($body['title']);
+                }
+                if (isset($body['completed'])) {
+                    $updatedTodo = $updatedTodo->withCompleted($body['completed']);
+                }
 
                 return $this->todoRepository->save($updatedTodo)
                     ->then(fn(Todo $savedTodo) => JsonResponse::create(200, $savedTodo->toArray()));
