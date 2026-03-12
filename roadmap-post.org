@@ -266,6 +266,41 @@ Todo::create($id, $title)
 
 30 minutos. Sin Jules. Sin Gemini Flash. Solo Opus.
 
+** Mas trabajo: controller tests + Docker + docs [COMPLETADO]
+
+Aprovechando que Jules tarda, hago lo que falta:
+
+- *Tests para Get/Update/Delete controllers* -- 7 tests nuevos, cobertura completa de todos los endpoints
+- *Dockerfile* multi-stage (PHP 8.2-cli, extensions, composer deps, port 8080)
+- *docker-compose.yml* con volumes de dev
+- *CHANGELOG, CONTRIBUTING, .editorconfig* para cohete-ddd (Jules fallo en esto: fue a una branch vieja y revirtio mis cambios)
+
+*Skeleton tests:* 31 tests, 62 assertions. CI verde.
+
+** Jules en paralelo
+
+Mientras yo trabajo, Jules ejecuta en background:
+
+| ID | Repo | Tarea | Estado |
+|----+------+-------+--------|
+| 5022972442836803545 | framework | Tests Message/RequestDumper/ResponseDumper | EN PROGRESO |
+| 11907822514946632250 | ddd | CHANGELOG/CONTRIBUTING/.editorconfig | COMPLETADO (pero inutil: fue a branch vieja) |
+| 2969031072763167679 | skeleton | Dockerfile/docker-compose/CHANGELOG | COMPLETADO (sin PR, trabajo perdido) |
+| 11872962532941358379 | framework | CONTRIBUTING/CHANGELOG/.editorconfig | EN PROGRESO |
+| 1358171643837447011 | skeleton | PHPStan max level | EN PROGRESO |
+
+*Leccion del dia:* Jules no sabe en que branch estas. Si tu main tiene cambios recientes, Jules puede ir a una branch vieja y trabajar sobre codigo obsoleto. Hay que especificar =startingBranch: main= Y asegurarse de que main esta al dia.
+
+Aun asi, para las tareas que aciertan, ahorra tiempo. Lo mecanico para Jules, lo arquitectonico para Opus.
+
+| Hora CET | Que |
+|----------+-----|
+| 19:05 | Tests Get/Update/Delete controllers: 7 nuevos |
+| 19:08 | Dockerfile + docker-compose |
+| 19:10 | DDD: CHANGELOG + CONTRIBUTING + .editorconfig |
+| 19:12 | Skeleton: 31 tests, CI verde |
+| 19:15 | 5 tareas Jules en vuelo |
+
 * Links
 
 - [[https://github.com/pascualmg/cohete-framework][cohete/framework]] -- Framework core
