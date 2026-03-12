@@ -4,10 +4,6 @@ namespace App\Domain;
 
 use App\Domain\Event\TodoCreated;
 use Cohete\DDD\Aggregate\AggregateRoot;
-use Cohete\DDD\ValueObject\UuidValueObject;
-
-class TodoId extends UuidValueObject {}
-
 class Todo extends AggregateRoot
 {
     private function __construct(
