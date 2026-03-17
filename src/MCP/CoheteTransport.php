@@ -1,0 +1,113 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\MCP;
+
+use Evenement\EventEmitterTrait;
+use PhpMcp\Server\Contracts\ServerTransportInterface;
+use PhpMcp\Server\Exception\TransportException;
+use PhpMcp\Schema\JsonRpc\Message;
+use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
+use React\Stream\ThroughStream;
+use React\Stream\WritableStreamInterface;
+
+use function React\Promise\reject;
+use function React\Promise\resolve;
+
+class CoheteTransport implements ServerTransportInterface
+{
+    use EventEmitterTrait;
+
+    /** @var array<string, ThroughStream> */
+    private array $sseStreams = [];
+
+    public function listen(): void
+    {
+        $this->emit('ready');
+    }
+
+    public function registerClient(string $clientId, ThroughStream $stream): void
+    {
+        $this->sseStreams[$clientId] = $stream;
+
+        $stream->on('close', function () use ($clientId) {
+            unset($this->sseStreams[$clientId]);
+            $this->emit('client_disconnected', [$clientId, 'SSE stream closed']);
+        });
+
+        $stream->on('error', function (\Throwable $error) use ($clientId) {
+            unset($this->sseStreams[$clientId]);
+            $this->emit('error', [new TransportException("SSE Error: {$error->getMessage()}", 0, $error), $clientId]);
+            $this->emit('client_disconnected', [$clientId, 'SSE stream error']);
+        });
+
+        $this->emit('client_connected', [$clientId]);
+    }
+
+    public function isClientConnected(string $clientId): bool
+    {
+        return isset($this->sseStreams[$clientId]);
+    }
+
+    public function handleIncomingMessage(Message $message, string $clientId): void
+    {
+        $this->emit('message', [$message, $clientId]);
+    }
+
+    public function sendMessage(Message $message, string $sessionId, array $context = []): PromiseInterface
+    {
+        if (!isset($this->sseStreams[$sessionId])) {
+            return reject(new TransportException("Client '{$sessionId}' not connected."));
+        }
+
+        $stream = $this->sseStreams[$sessionId];
+        if (!$stream->isWritable()) {
+            return reject(new TransportException("SSE stream for '{$sessionId}' not writable."));
+        }
+
+        $json = json_encode($message, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($json === false || $json === '') {
+            return resolve(null);
+        }
+
+        $written = $this->sendSseEvent($stream, 'message', $json);
+        if ($written) {
+            return resolve(null);
+        }
+
+        $deferred = new Deferred();
+        $stream->once('drain', fn () => $deferred->resolve(null));
+        return $deferred->promise();
+    }
+
+    private function sendSseEvent(WritableStreamInterface $stream, string $event, string $data, ?string $id = null): bool
+    {
+        if (!$stream->isWritable()) {
+            return false;
+        }
+
+        $frame = "event: {$event}\n";
+        if ($id !== null) {
+            $frame .= "id: {$id}\n";
+        }
+        foreach (explode("\n", $data) as $line) {
+            $frame .= "data: {$line}\n";
+        }
+        $frame .= "\n";
+
+        return $stream->write($frame);
+    }
+
+    public function close(): void
+    {
+        $streams = $this->sseStreams;
+        $this->sseStreams = [];
+        foreach ($streams as $stream) {
+            $stream->close();
+        }
+        $this->emit('close', ['CoheteTransport closed.']);
+        $this->removeAllListeners();
+    }
+}

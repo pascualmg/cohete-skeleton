@@ -5,8 +5,9 @@ template.innerHTML = `
 <style>
   :host {
     display: block;
-    max-width: 32rem;
-    margin: 2rem auto;
+    width: 100%;
+    max-width: 36rem;
+    margin: 0 auto;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
   h1 {

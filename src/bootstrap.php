@@ -4,6 +4,8 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use App\Bus\BunnieMessageBus;
 use App\Domain\TodoRepository;
+use App\MCP\CoheteTransport;
+use App\MCP\McpServerFactory;
 use App\Repository\InMemoryTodoRepository;
 use App\Repository\MysqlTodoRepository;
 use App\Subscriber\TodoCreatedSubscriber;
@@ -79,7 +81,21 @@ if ($useMysql) {
     };
 }
 
+// -- MCP SSE transport: integrated into the same HTTP server --
+$definitions[CoheteTransport::class] = static function (ContainerInterface $c) {
+    $transport = new CoheteTransport();
+    McpServerFactory::create(
+        $c,
+        $c->get(LoggerInterface::class),
+        $transport,
+    );
+    return $transport;
+};
+
 $container = ContainerFactory::create($definitions);
+
+// Eagerly initialize MCP transport so it's ready for SSE connections
+$container->get(CoheteTransport::class);
 
 // Wire domain event subscribers
 /** @var MessageBus $bus */

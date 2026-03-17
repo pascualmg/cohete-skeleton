@@ -33,5 +33,15 @@
     "method": "DELETE",
     "path": "/todos/{id}",
     "handler": "App\\Controller\\DeleteTodoController"
+  },
+  {
+    "method": "GET",
+    "path": "/mcp/sse",
+    "handler": "App\\Controller\\McpSseController"
+  },
+  {
+    "method": "POST",
+    "path": "/mcp/message",
+    "handler": "App\\Controller\\McpMessageController"
   }
 ]
