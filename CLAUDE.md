@@ -430,6 +430,86 @@ cohete-test               # or vendor/bin/phpunit
 | `bunny/bunny` | AMQP/RabbitMQ client (0.6, Fiber-based) |
 | `reactivex/rxphp` | Observable streams for query result mapping |
 
+## Frontend
+
+Cohete uses **vanilla JavaScript with Web Components**. No React, no Vue, no build step, no bundler. ES modules loaded directly by the browser.
+
+### Philosophy
+
+- **Web Components with Shadow DOM**: encapsulated, reusable, framework-free.
+- **Atomic Design**: atoms (TodoItem) compose into organisms (TodoApp).
+- **ES modules**: `import` / `export` natively. No webpack, no vite, no transpilation.
+- **Styles in Shadow DOM**: each component owns its CSS. No global stylesheet conflicts.
+
+### Structure
+
+```text
+public/
+├── index.html                    # Entry point (served by IndexController at /)
+└── js/
+    └── components/
+        ├── TodoApp.js            # Organism: full todo CRUD, fetches API
+        └── TodoItem.js           # Atom: single todo row with toggle/delete
+```
+
+### Static File Serving
+
+The framework's `ReactHttpServer` has a built-in static file middleware. Activated by passing `staticRoot` in bootstrap.php:
+
+```php
+$staticRoot = __DIR__ . '/../public';
+ReactHttpServer::init(
+    host: '0.0.0.0', port: '8080',
+    kernel: $kernel, loop: $loop,
+    staticRoot: $staticRoot,
+);
+```
+
+Any request with a file extension (`.js`, `.css`, `.png`, etc.) is checked against `public/`. If found, served directly with correct MIME type and cache headers. If not found, falls through to the router.
+
+### How to add a Web Component
+
+1. Create `public/js/components/MyComponent.js`:
+
+```js
+const template = document.createElement('template');
+template.innerHTML = `
+<style>
+  :host { display: block; }
+  /* component-scoped CSS */
+</style>
+<div class="root"></div>
+`;
+
+class MyComponent extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    this.shadowRoot.appendChild(template.content.cloneNode(true));
+  }
+
+  connectedCallback() {
+    // fetch API, add listeners, render
+  }
+}
+
+customElements.define('my-component', MyComponent);
+export default MyComponent;
+```
+
+2. Use it in HTML:
+
+```html
+<my-component></my-component>
+<script type="module" src="/js/components/MyComponent.js"></script>
+```
+
+### Patterns
+
+- **API calls**: Use `fetch()` against the same origin. The server serves both API and frontend.
+- **Events between components**: Use `CustomEvent` with `bubbles: true, composed: true` to cross Shadow DOM boundaries.
+- **No state library**: Components manage their own state. For shared state, use events or a simple pub/sub.
+
 ## Common Mistakes
 
 1. **Blocking I/O**: Never use `file_get_contents()`, `PDO`, `mysqli`, or any synchronous I/O. It freezes the entire server.

@@ -94,11 +94,14 @@ $bus->subscribe(
 
 $kernel = new Kernel($container, $routesPath);
 
+$staticRoot = __DIR__ . '/../public';
+
 ReactHttpServer::init(
     host: '0.0.0.0',
     port: '8080',
     kernel: $kernel,
     loop: $loop,
+    staticRoot: $staticRoot,
 );
 
 $loop->run();

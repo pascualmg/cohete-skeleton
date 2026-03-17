@@ -1,6 +1,11 @@
 [
   {
     "method": "GET",
+    "path": "/",
+    "handler": "App\\Controller\\IndexController"
+  },
+  {
+    "method": "GET",
     "path": "/health",
     "handler": "App\\Controller\\HealthController"
   },
