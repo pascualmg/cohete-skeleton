@@ -465,13 +465,30 @@ Configure in your agent (e.g., `.claude/settings.json`):
 }
 ```
 
-### SSE/HTTP (remote, production)
+### SSE/HTTP (remote, integrated)
 
-For external agents. Exposes only the tools you want to be public, with authentication if needed. Integrated into the same HTTP server (no separate process, no extra port).
+For any MCP-compatible agent over HTTP. Integrated into the same HTTP server -- same process, same event loop, same state as the REST API and frontend. No extra port, no separate process.
 
-Routes: `GET /mcp/sse` (opens stream) + `POST /mcp/message` (receives JSON-RPC).
+Routes: `GET /mcp/sse` (opens SSE stream) + `POST /mcp/message` (receives JSON-RPC).
 
-**Not included in the skeleton by default** -- add it when you need external agent access. See the [Cohete blog](https://github.com/pascualmg/cohete) for the full SSE transport implementation.
+The SSE transport starts automatically with the HTTP server. Connect your agent:
+
+```bash
+# Claude Code
+claude mcp add my-app --transport sse http://localhost:8080/mcp/sse
+
+# Or in .claude/settings.json
+{
+  "mcpServers": {
+    "my-app": {
+      "type": "sse",
+      "url": "http://localhost:8080/mcp/sse"
+    }
+  }
+}
+```
+
+Once connected, the agent has direct access to your domain tools. Create data via MCP, see it in the browser. Same memory, same process.
 
 ### Tool handlers
 

@@ -208,7 +208,13 @@ php src/mcp-server.php
 
 Tools live in `src/MCP/TodoToolHandlers.php`. Add your own by adding methods with `#[McpTool]` attribute.
 
-**Remote (SSE/HTTP)** -- for external agents in production. Not wired by default in the skeleton. See the [Cohete blog](https://github.com/pascualmg/cohete) for the full SSE transport implementation.
+**Remote (SSE/HTTP)** -- integrated into the HTTP server. Same process, same state:
+```bash
+# Connect Claude Code
+claude mcp add my-app --transport sse http://localhost:8080/mcp/sse
+```
+
+Create data via MCP, see it in the browser. Same memory, same event loop.
 
 > The skeleton ships with batteries included. If you don't need MCP, MySQL, or RabbitMQ, remove them. If you leave them, unused features don't affect performance -- they only load when activated via env vars.
 
