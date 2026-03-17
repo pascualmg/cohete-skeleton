@@ -189,28 +189,52 @@ Servicios incluidos:
 - **mysql**: MySQL 8.0 (puerto 3306, schema auto-loaded)
 - **rabbitmq**: RabbitMQ 3 + management UI (puertos 5672/15672)
 
+## MCP (Model Context Protocol)
+
+The skeleton includes MCP so AI agents can interact with your app from day one.
+
+**Local (stdio)** -- for development, your agent calls your domain directly:
+```bash
+php src/mcp-server.php
+```
+
+| Tool | Description |
+|------|-------------|
+| `list_todos` | List all todos |
+| `get_todo` | Get a todo by UUID |
+| `create_todo` | Create a new todo |
+| `update_todo` | Update title/completed |
+| `delete_todo` | Delete a todo |
+
+Tools live in `src/MCP/TodoToolHandlers.php`. Add your own by adding methods with `#[McpTool]` attribute.
+
+**Remote (SSE/HTTP)** -- for external agents in production. Not wired by default in the skeleton. See the [Cohete blog](https://github.com/pascualmg/cohete) for the full SSE transport implementation.
+
+> The skeleton ships with batteries included. If you don't need MCP, MySQL, or RabbitMQ, remove them. If you leave them, unused features don't affect performance -- they only load when activated via env vars.
+
 ## Project Structure
 
 ```text
 .
 ├── config/
 │   └── routes.json              # HTTP routing
+├── public/
+│   ├── index.html               # Frontend entry point
+│   └── js/components/           # Web Components (vanilla JS, Shadow DOM)
 ├── src/
 │   ├── Bus/
-│   │   └── BunnieMessageBus.php # RabbitMQ implementation
+│   │   └── BunnieMessageBus.php # RabbitMQ message bus
 │   ├── Controller/              # HTTP request handlers
-│   ├── Domain/                  # Entities, Value Objects, interfaces
-│   │   ├── Todo.php             # Aggregate root
-│   │   ├── TodoId.php           # UUID value object
-│   │   ├── TodoRepository.php   # Repository interface
-│   │   └── Event/
-│   │       └── TodoCreated.php  # Domain event
+│   ├── Domain/                  # Entities, Value Objects, interfaces, Events
+│   ├── MCP/
+│   │   └── TodoToolHandlers.php # MCP tool handlers (shared by all transports)
 │   ├── Repository/
 │   │   ├── InMemoryTodoRepository.php  # Default (no deps)
 │   │   └── MysqlTodoRepository.php     # Async MySQL
 │   ├── Subscriber/
 │   │   └── TodoCreatedSubscriber.php   # Event handler
-│   └── bootstrap.php            # Entry point, DI, infra switches
+│   ├── bootstrap.php            # HTTP server entry point
+│   └── mcp-server.php           # MCP stdio server (local dev)
 ├── schema.sql                   # MySQL schema
 ├── .env.example                 # Config template
 ├── docker-compose.yml           # App + MySQL + RabbitMQ

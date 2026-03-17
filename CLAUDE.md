@@ -4,6 +4,12 @@ You are working on a Cohete project. Cohete is an async PHP framework built on R
 
 **Do not treat this like Laravel, Symfony, or any traditional PHP framework.** There is no request lifecycle, no PHP-FPM, no Apache. The server is a long-running PHP process.
 
+## Skeleton Philosophy
+
+Cohete is NOT an opinionated framework. But the skeleton IS opinionated -- it ships with batteries included so you can start building immediately: MySQL, RabbitMQ, Web Components, and MCP are all wired up out of the box.
+
+If you don't need something, remove it. If you leave it unused, it doesn't affect performance -- unused infrastructure (MySQL, RabbitMQ, MCP) is only loaded when env vars activate it. The skeleton is a starting point, not a prison.
+
 ## The Golden Rule
 
 **Every I/O operation returns a `PromiseInterface`.** Never block. Never use `sleep()`, `file_get_contents()`, or synchronous database calls. If you need to do I/O, use the async version and chain with `->then()`.
@@ -17,8 +23,13 @@ src/
 │   └── Event/           # Domain events (implement DomainEvent)
 ├── Repository/          # Infrastructure: InMemory, MySQL implementations
 ├── Bus/                 # Message bus implementations (BunnieMessageBus)
+├── MCP/                 # MCP tool handlers (shared by stdio and SSE transports)
 ├── Subscriber/          # Event handlers (callables for MessageBus)
-└── bootstrap.php        # Entry point: event loop, DI, infra switching, server
+├── bootstrap.php        # Entry point: event loop, DI, infra switching, HTTP server
+└── mcp-server.php       # MCP stdio server (for local dev with AI agents)
+public/
+├── index.html           # Frontend entry point
+└── js/components/       # Web Components (vanilla JS, Shadow DOM, ES modules)
 ```
 
 Domain is on top. Framework is below. Controllers and Repositories are infrastructure. The domain NEVER imports framework classes.
@@ -429,6 +440,71 @@ cohete-test               # or vendor/bin/phpunit
 | `react/mysql` | Async MySQL client |
 | `bunny/bunny` | AMQP/RabbitMQ client (0.6, Fiber-based) |
 | `reactivex/rxphp` | Observable streams for query result mapping |
+
+## MCP (Model Context Protocol)
+
+The skeleton ships with MCP support so AI agents can interact with your domain directly. Two transports, same tool handlers:
+
+### stdio (local development)
+
+For your local AI agent (Claude Code, Cursor). Runs as a subprocess, talks via stdin/stdout. Full access to your domain -- internal operations, DB queries, whatever you need during development.
+
+```bash
+php src/mcp-server.php
+```
+
+Configure in your agent (e.g., `.claude/settings.json`):
+```json
+{
+  "mcpServers": {
+    "my-app": {
+      "command": "php",
+      "args": ["src/mcp-server.php"]
+    }
+  }
+}
+```
+
+### SSE/HTTP (remote, production)
+
+For external agents. Exposes only the tools you want to be public, with authentication if needed. Integrated into the same HTTP server (no separate process, no extra port).
+
+Routes: `GET /mcp/sse` (opens stream) + `POST /mcp/message` (receives JSON-RPC).
+
+**Not included in the skeleton by default** -- add it when you need external agent access. See the [Cohete blog](https://github.com/pascualmg/cohete) for the full SSE transport implementation.
+
+### Tool handlers
+
+Tools live in `src/MCP/TodoToolHandlers.php`. They use `await()` to bridge async domain operations to the sync MCP handler API:
+
+```php
+#[McpTool(name: 'list_todos')]
+public function listTodos(): array
+{
+    $todos = await($this->todoRepository->findAll());
+    return array_map(fn (Todo $t) => $t->toArray(), $todos);
+}
+```
+
+### Adding a new MCP tool
+
+1. Add a public method to your tool handler class with `#[McpTool]` attribute.
+2. Method parameters become the tool's input schema (via PHP reflection).
+3. Register it in `mcp-server.php`:
+
+```php
+->withTool([TodoToolHandlers::class, 'myNewTool'], 'my_tool', 'Description of the tool')
+```
+
+### Skeleton tools
+
+| Tool | Description |
+|------|-------------|
+| `list_todos` | List all todos |
+| `get_todo` | Get a todo by UUID |
+| `create_todo` | Create a new todo |
+| `update_todo` | Update title/completed |
+| `delete_todo` | Delete a todo |
 
 ## Frontend
 

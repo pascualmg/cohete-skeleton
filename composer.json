@@ -9,7 +9,8 @@
         "cohete/ddd": "dev-main",
         "reactivex/rxphp": "^2.0",
         "react/mysql": "^0.7@dev",
-        "bunny/bunny": "^0.6@alpha"
+        "bunny/bunny": "^0.6@alpha",
+        "php-mcp/server": "^3.3"
     },
     "require-dev": {
         "phpunit/phpunit": "^11.0"
