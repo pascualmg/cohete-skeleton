@@ -5,3 +5,5 @@ composer.lock
 .idea/
 *.swp
 .direnv/
+.env
+.composer-home/
