@@ -5,8 +5,8 @@
     "license": "MIT",
     "require": {
         "php": ">=8.2",
-        "cohete/framework": "dev-main",
-        "cohete/ddd": "dev-main",
+        "cohete/framework": "^0.1",
+        "cohete/ddd": "^0.1",
         "reactivex/rxphp": "^2.0",
         "react/mysql": "^0.7@dev",
         "bunny/bunny": "^0.6@alpha",
