@@ -10,7 +10,6 @@ use Cohete\Bus\MessageBus;
 use React\Mysql\MysqlClient;
 use React\Mysql\MysqlResult;
 use React\Promise\PromiseInterface;
-use Rx\Observable;
 
 class MysqlTodoRepository implements TodoRepository
 {
@@ -22,22 +21,17 @@ class MysqlTodoRepository implements TodoRepository
 
     public function findAll(): PromiseInterface
     {
-        return Observable::fromPromise(
-            $this->mysqlClient->query('SELECT * FROM todo ORDER BY title ASC')
-        )->map(
-            fn (MysqlResult $result) => array_map([self::class, 'hydrate'], $result->resultRows)
-        )->toPromise();
+        return $this->mysqlClient->query('SELECT * FROM todo ORDER BY title ASC')
+            ->then(fn (MysqlResult $result) => array_map([self::class, 'hydrate'], $result->resultRows));
     }
 
     public function findById(TodoId $id): PromiseInterface
     {
-        return Observable::fromPromise(
-            $this->mysqlClient->query('SELECT * FROM todo WHERE id = ?', [$id->value])
-        )->map(
-            fn (MysqlResult $result) => isset($result->resultRows[0])
+        return $this->mysqlClient->query('SELECT * FROM todo WHERE id = ?', [$id->value])
+            ->then(fn (MysqlResult $result) => isset($result->resultRows[0])
                 ? self::hydrate($result->resultRows[0])
                 : null
-        )->toPromise();
+            );
     }
 
     public function save(Todo $todo): PromiseInterface

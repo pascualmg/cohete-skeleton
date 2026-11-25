@@ -5,14 +5,18 @@ Starter project for Cohete async PHP.
 ## Quick Start
 
 ```bash
-git clone <repository-url>
-cd cohete-skeleton
-composer install
-make run
+composer create-project cohete/skeleton my-app
+cd my-app
+cp .env.example .env      # APP_ENV=dev, PORT=8080
+php src/bootstrap.php
 curl localhost:8080/health
 ```
 
-Sin dependencias externas. Arranca con almacenamiento en memoria y bus de eventos local. Listo para desarrollar.
+No external dependencies: it starts with in-memory storage and a local event bus. With Nix, `nix develop`
+gives you PHP and Composer and `cohete-serve` starts the server.
+
+`APP_ENV=dev` shows exception details in error responses and dumps requests to the log. Any other value
+is production: unhandled errors answer a generic `500` and nothing internal leaks.
 
 ## Endpoints
 

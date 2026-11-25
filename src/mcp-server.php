@@ -22,10 +22,6 @@ use PhpMcp\Server\Server;
 use PhpMcp\Server\Transports\StdioServerTransport;
 use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
-use React\EventLoop\Loop;
-use Rx\Scheduler;
-use Rx\Scheduler\EventLoopScheduler;
-
 // Stderr logger (stdout is reserved for MCP protocol)
 $logger = new class extends AbstractLogger {
     public function log($level, \Stringable|string $message, array $context = []): void
@@ -35,11 +31,6 @@ $logger = new class extends AbstractLogger {
 };
 
 try {
-    // RxPHP needs the scheduler for Observable operations
-    $loop = Loop::get();
-    $scheduler = new EventLoopScheduler($loop);
-    Scheduler::setDefaultFactory(static fn () => $scheduler);
-
     // Load .env if present
     $envFile = __DIR__ . '/../.env';
     if (file_exists($envFile)) {

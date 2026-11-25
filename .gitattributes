@@ -1,0 +1,5 @@
+# Left out of `composer create-project` / dist archives
+/.github export-ignore
+/roadmap-post.org export-ignore
+/CLAUDE.md export-ignore
+/CONTRIBUTING.md export-ignore

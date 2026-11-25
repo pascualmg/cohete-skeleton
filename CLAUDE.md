@@ -197,7 +197,6 @@ use Cohete\Bus\MessageBus;
 use React\Mysql\MysqlClient;
 use React\Mysql\MysqlResult;
 use React\Promise\PromiseInterface;
-use Rx\Observable;
 
 class MysqlProductRepository implements ProductRepository
 {
@@ -208,20 +207,14 @@ class MysqlProductRepository implements ProductRepository
 
     public function findAll(): PromiseInterface
     {
-        return Observable::fromPromise(
-            $this->mysqlClient->query('SELECT * FROM product ORDER BY name')
-        )->map(
-            fn (MysqlResult $r) => array_map([self::class, 'hydrate'], $r->resultRows)
-        )->toPromise();
+        return $this->mysqlClient->query('SELECT * FROM product ORDER BY name')
+            ->then(fn (MysqlResult $r) => array_map([self::class, 'hydrate'], $r->resultRows));
     }
 
     public function findById(ProductId $id): PromiseInterface
     {
-        return Observable::fromPromise(
-            $this->mysqlClient->query('SELECT * FROM product WHERE id = ?', [$id->value])
-        )->map(
-            fn (MysqlResult $r) => isset($r->resultRows[0]) ? self::hydrate($r->resultRows[0]) : null
-        )->toPromise();
+        return $this->mysqlClient->query('SELECT * FROM product WHERE id = ?', [$id->value])
+            ->then(fn (MysqlResult $r) => isset($r->resultRows[0]) ? self::hydrate($r->resultRows[0]) : null);
     }
 
     public function save(Product $product): PromiseInterface
@@ -255,7 +248,7 @@ class MysqlProductRepository implements ProductRepository
 }
 ```
 
-Pattern: `Observable::fromPromise(query) -> map(hydrate) -> toPromise()`. Use parameterized queries (`?` placeholders) always.
+Pattern: `$query->then(fn (MysqlResult $r) => hydrate($r))`. Use parameterized queries (`?` placeholders) always.
 
 ### 7. Controller
 
@@ -439,7 +432,6 @@ cohete-test               # or vendor/bin/phpunit
 | `cohete/ddd` | AggregateRoot, DomainEvent, UuidValueObject |
 | `react/mysql` | Async MySQL client |
 | `bunny/bunny` | AMQP/RabbitMQ client (0.6, Fiber-based) |
-| `reactivex/rxphp` | Observable streams for query result mapping |
 
 ## MCP (Model Context Protocol)
 

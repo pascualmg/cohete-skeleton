@@ -56,17 +56,6 @@
           ];
 
           shellHook = ''
-            # Isolate from Vocento global composer config (Toran)
-            # while preserving auth credentials for GitHub VCS repos
-            export COMPOSER_HOME="$PWD/.composer-home"
-            if [ ! -d "$COMPOSER_HOME" ]; then
-              mkdir -p "$COMPOSER_HOME"
-              # Copy auth.json if it exists (GitHub tokens, etc.)
-              if [ -f "''${XDG_CONFIG_HOME:-$HOME/.config}/composer/auth.json" ]; then
-                cp "''${XDG_CONFIG_HOME:-$HOME/.config}/composer/auth.json" "$COMPOSER_HOME/auth.json"
-              fi
-            fi
-
             echo "-------------------------------------------"
             echo " Cohete Skeleton - dev environment"
             echo "-------------------------------------------"

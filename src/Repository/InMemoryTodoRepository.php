@@ -8,7 +8,6 @@ use App\Domain\TodoRepository;
 use Cohete\Bus\Message;
 use Cohete\Bus\MessageBus;
 use React\Promise\PromiseInterface;
-use Rx\Observable;
 
 use function React\Promise\resolve;
 
@@ -24,9 +23,7 @@ class InMemoryTodoRepository implements TodoRepository
 
     public function findAll(): PromiseInterface
     {
-        return Observable::fromArray(array_values($this->todos))
-            ->toArray()
-            ->toPromise();
+        return resolve(array_values($this->todos));
     }
 
     public function findById(TodoId $id): PromiseInterface

@@ -17,8 +17,6 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use React\EventLoop\Loop;
 use React\Mysql\MysqlClient;
-use Rx\Scheduler;
-use Rx\Scheduler\EventLoopScheduler;
 
 // Load .env if present
 $envFile = __DIR__ . '/../.env';
@@ -31,9 +29,6 @@ if (file_exists($envFile)) {
 }
 
 $loop = Loop::get();
-
-$scheduler = new EventLoopScheduler($loop);
-Scheduler::setDefaultFactory(static fn () => $scheduler);
 
 $routesPath = __DIR__ . '/../config/routes.json';
 
@@ -108,16 +103,20 @@ $bus->subscribe(
     new TodoCreatedSubscriber($logger)
 );
 
-$kernel = new Kernel($container, $routesPath);
+// APP_ENV=dev: exception details in error responses and request/response dumps in the log.
+// Anything else (the default) is production: generic 500s, quiet log.
+$isDevelopment = getenv('APP_ENV') === 'dev';
+
+$kernel = new Kernel($container, $routesPath, debug: $isDevelopment);
 
 $staticRoot = __DIR__ . '/../public';
 
 ReactHttpServer::init(
-    host: '0.0.0.0',
-    port: '8080',
+    host: getenv('HOST') ?: '0.0.0.0',
+    port: getenv('PORT') ?: '8080',
     kernel: $kernel,
-    loop: $loop,
     staticRoot: $staticRoot,
+    isDevelopment: $isDevelopment,
 );
 
 $loop->run();
